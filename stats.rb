@@ -4,10 +4,10 @@ RB = "#{REPO}/Merlin/Main/Languages/Ruby"
 BIN = "#{REPO}/Merlin/Main/Bin/debug"
 CD = File.expand_path(File.dirname(__FILE__))
 DATA = "#{CD}/data"
-INTERPRET = "-X:Interpret"
+NAC = "-X:NoAdaptiveCompilation"
 IR = "#{BIN}/ir.exe"
 MSPEC = "mspec.bat run -fs"
-MSPEC_OPTIONS = "-Gcritical -Gthread"
+MSPEC_OPTIONS = "-Gcritical -Gunstable"
 
 require 'fileutils'
 require 'mymath'
@@ -113,10 +113,10 @@ module Stats
     iters = 10.0
     iters.to_i.times do
       c += Benchmark.measure do
-        `#{IR} #{CD}/empty.rb`
+        `#{IR} #{NAC} #{CD}/empty.rb`
       end.real
       i += Benchmark.measure do
-        `#{IR} #{INTERPRET} #{CD}/empty.rb`
+        `#{IR} #{CD}/empty.rb`
       end.real
       r += Benchmark.measure do
         `ruby #{CD}/empty.rb`
@@ -133,8 +133,8 @@ module Stats
     c = i = r = 0
     iters = 10.0
     iters.to_i.times do
-      i += `#{IR} #{INTERPRET} #{CD}/loop.rb`.to_f
-      c += `#{IR} #{CD}/loop.rb`.to_f
+      i += `#{IR} #{CD}/loop.rb`.to_f
+      c += `#{IR} #{NAC} #{CD}/loop.rb`.to_f
       r += `ruby #{CD}/loop.rb`.to_f
     end
     c, i, r = [c,i,r].map{|i| i / iters}
@@ -432,26 +432,28 @@ def usage
   o
 end
 
-if ARGV.empty?
-  puts usage
-end
-
-ARGV.each do |arg|
-  found = false
-  
-  $behavior.each do |options, lmbd|
-    if options.include?(arg)
-      found = true
-      lmbd.call
-    elsif options.select{|o| o.kind_of?(Regexp) && arg =~ o}.size == 1
-      found = true
-      lmbd.call($~)
-    end
-  end
-  
-  unless found
-    puts "Unknown argument '#{arg}'"
+if __FILE__ == $0
+  if ARGV.empty?
     puts usage
-    exit
+  end
+
+  ARGV.each do |arg|
+    found = false
+    
+    $behavior.each do |options, lmbd|
+      if options.include?(arg)
+        found = true
+        lmbd.call
+      elsif options.select{|o| o.kind_of?(Regexp) && arg =~ o}.size == 1
+        found = true
+        lmbd.call($~)
+      end
+    end
+    
+    unless found
+      puts "Unknown argument '#{arg}'"
+      puts usage
+      exit
+    end
   end
 end

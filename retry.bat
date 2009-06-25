@@ -1,4 +1,4 @@
-pushd %~dp0\..\..\..\Main
+pushd %MERLIN_ROOT%
 tf get
 popd
 pushd %~dp0
